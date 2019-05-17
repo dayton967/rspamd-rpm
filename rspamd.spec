@@ -1,6 +1,6 @@
 Name:             rspamd
 Version:          1.9.3
-Release:          5%{?dist}
+Release:          6%{?dist}
 Summary:          Rapid spam filtering system
 License:          ASL 2.0 and LGPLv2+ and LGPLv3 and BSD and MIT and CC0 and zlib
 URL:              https://www.rspamd.com/
@@ -8,6 +8,7 @@ Source0:          https://github.com/vstakhov/%{name}/archive/%{version}.tar.gz#
 Source1:          80-rspamd.preset
 Source2:          rspamd.service
 Source3:          rspamd.logrotate
+Source4:          rspamd.sysusers
 Patch0:           rspamd-secure-ssl-ciphers.patch
 
 BuildRequires:    cmake
@@ -132,16 +133,13 @@ rm -rf freebsd
   -DDEBIAN_BUILD=1 \
   -DRSPAMD_USER=%{name} \
   -DRSPAMD_GROUP=%{name}
+%make_build
 
 %check
 # TODO: Run Tests
 
 %pre
-getent group rspamd >/dev/null || groupadd -r rspamd
-getent passwd rspamd >/dev/null || \
-    useradd -r -g rspamd -d %{_sharedstatedir}/rspamd -s /sbin/nologin \
-    -c "Rspamd user" rspamd
-exit 0
+%sysusers_create_package %{name} %{SOURCE4}
 
 %install
 %{make_install} DESTDIR=%{buildroot} INSTALLDIRS=vendor
