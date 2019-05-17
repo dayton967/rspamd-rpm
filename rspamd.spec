@@ -1,10 +1,10 @@
 Name:             rspamd
-Version:          1.9.3
-Release:          6%{?dist}
+Version:          1.9.4
+Release:          4%{?dist}
 Summary:          Rapid spam filtering system
 License:          ASL 2.0 and LGPLv2+ and LGPLv3 and BSD and MIT and CC0 and zlib
 URL:              https://www.rspamd.com/
-Source0:          https://github.com/vstakhov/%{name}/archive/%{version}.tar.gz#/%{name}-%{version}.tar.gz
+Source0:          https://github.com/rspamd/%{name}/archive/%{version}.tar.gz#/%{name}-%{version}.tar.gz
 Source1:          80-rspamd.preset
 Source2:          rspamd.service
 Source3:          rspamd.logrotate
@@ -161,6 +161,10 @@ install -Dpm 0644 LICENSE.md %{buildroot}%{_docdir}/licenses/LICENSE.md
 
 %postun
 %systemd_postun_with_restart rspamd.service
+getent passwd rspamd >/dev/null && userdel rspamd
+getent group rspamd >/dev/null && groupdel rspamd
+[ -d %{_datadir}/rspamd ] && rm -rf %{_datadir}/rspamd
+exit 0
 
 %files
 %license %{_docdir}/licenses/LICENSE.md
@@ -251,6 +255,16 @@ install -Dpm 0644 LICENSE.md %{buildroot}%{_docdir}/licenses/LICENSE.md
 %{_unitdir}/rspamd.service
 
 %changelog
+* Mon Jul 18 2019 Jason Robertson <copr@dden.ca> - 1.9.4-4
+- Revert changes done for 1.9.4-3
+
+* Mon May 27 2019 Jason Robertson <copr@dden.ca> - 1.9.4-3
+- Cleanup accounts when uninstalled
+- Cleanup directories that do not get removed
+
+* Sat May 25 2019 Jason Robertson <copr@dden.ca> - 1.9.4-2
+- Updated for 1.9.4 release
+
 * Fri May 17 2019 Jason Robertson <copr@dden.ca> - 1.9.3-5
 - Updated for 1.9.3 release
 - Added fedora ppc64le, these have had luajit and torch disabled.
