@@ -1,0 +1,2 @@
+# rspamd-rpm
+Rspam Development
