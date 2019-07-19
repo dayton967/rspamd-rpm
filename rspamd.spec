@@ -161,10 +161,6 @@ install -Dpm 0644 LICENSE.md %{buildroot}%{_docdir}/licenses/LICENSE.md
 
 %postun
 %systemd_postun_with_restart rspamd.service
-getent passwd rspamd >/dev/null && userdel rspamd
-getent group rspamd >/dev/null && groupdel rspamd
-[ -d %{_datadir}/rspamd ] && rm -rf %{_datadir}/rspamd
-exit 0
 
 %files
 %license %{_docdir}/licenses/LICENSE.md
