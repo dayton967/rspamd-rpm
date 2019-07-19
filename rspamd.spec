@@ -1,6 +1,6 @@
 Name:             rspamd
 Version:          1.9.4
-Release:          4%{?dist}
+Release:          5%{?dist}
 Summary:          Rapid spam filtering system
 License:          ASL 2.0 and LGPLv2+ and LGPLv3 and BSD and MIT and CC0 and zlib
 URL:              https://www.rspamd.com/
@@ -251,6 +251,9 @@ install -Dpm 0644 LICENSE.md %{buildroot}%{_docdir}/licenses/LICENSE.md
 %{_unitdir}/rspamd.service
 
 %changelog
+* Mon Jul 18 2019 Jason Robertson <copr@dden.ca> - 1.9.4-5
+- Previous changes did not apply properly
+
 * Mon Jul 18 2019 Jason Robertson <copr@dden.ca> - 1.9.4-4
 - Revert changes done for 1.9.4-3
 
