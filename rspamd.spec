@@ -1,6 +1,6 @@
 Name:             rspamd
-Version:          1.9.4
-Release:          5%{?dist}
+Version:          2.0
+Release:          7%{?dist}
 Summary:          Rapid spam filtering system
 License:          ASL 2.0 and LGPLv2+ and LGPLv3 and BSD and MIT and CC0 and zlib
 URL:              https://www.rspamd.com/
@@ -10,17 +10,24 @@ Source2:          rspamd.service
 Source3:          rspamd.logrotate
 Source4:          rspamd.sysusers
 Patch0:           rspamd-secure-ssl-ciphers.patch
+#Patch1:           rspamd-cmake.patch
 
+%if (0%{?rhel} == 7)
+BuildRequires:    cmake3
+%else
 BuildRequires:    cmake
+%endif
 BuildRequires:    fann-devel
 BuildRequires:    file-devel
 BuildRequires:    glib2-devel
 BuildRequires:    gmime-devel
+BuildRequires:    libsodium-devel
 %if (0%{?fedora} >=28 || 0%{?rhel} > 7)
 %ifarch x86_64
 BuildRequires:    hyperscan-devel
 %endif
 %endif
+
 %if (0%{?fedora} >=28 || 0%{?rhel} > 7)
 BuildRequires:    libnsl2-devel
 %endif
@@ -44,6 +51,7 @@ BuildRequires:    zlib-devel
 Requires(pre):    shadow-utils
 Requires:         logrotate
 Requires:         zlib
+Requires:		  libsodium
 
 # Bundled dependencies
 # TODO: Add explicit bundled lib versions
@@ -102,6 +110,7 @@ lua.
 %prep
 %setup -q
 %patch0 -p1
+#%patch1 -p1 -b .cmake
 rm -rf centos
 rm -rf debian
 rm -rf docker
@@ -109,7 +118,11 @@ rm -rf freebsd
 
 %build
 # TODO: Investigate, do we want DEBIAN_BUILD=1? Any other improvements?
+%if (0%{?rhel} == 7)
+%cmake3 \
+%else
 %cmake \
+%endif
   -DCONFDIR=%{_sysconfdir}/%{name} \
   -DMANDIR=%{_mandir} \
   -DDBDIR=%{_sharedstatedir}/%{name} \
@@ -122,9 +135,11 @@ rm -rf freebsd
 %endif
   -DENABLE_HIREDIS=ON \
   -DENABLE_FANN=ON \
+%ifarch x86_64
 %if (0%{?fedora} >= 28 || 0%{?rhel} > 7)
   -DENABLE_HYPERSCAN=ON \
   -DHYPERSCAN_ROOT_DIR=/opt/hyperscan \
+%endif
 %endif
   -DLOGDIR=%{_localstatedir}/log/%{name} \
   -DPLUGINSDIR=%{_datadir}/%{name} \
@@ -192,11 +207,13 @@ install -Dpm 0644 LICENSE.md %{buildroot}%{_docdir}/licenses/LICENSE.md
 %endif
 
 %if (0%{?fedora} >=28 || 0%{?rhel} > 7)
-%dir %{_datadir}/%{name}/lualib/{decisiontree,nn,optim,paths,rspamadm,torch}
-%{_datadir}/%{name}/lualib/{decisiontree,nn,optim,paths,rspamadm,torch,lua_ffi,lua_scanners}/*.lua
+%dir %{_datadir}/%{name}/lualib/{decisiontree,nn,optim,paths,rspamadm,torch,lua_magic,lua_selectors}
+%{_datadir}/%{name}/lualib/{decisiontree,nn,optim,paths,rspamadm,torch,lua_ffi,lua_scanners,lua_magic,lua_selectors}/*.lua
 %{_datadir}/%{name}/lualib/*.lua
 %else
 %ifnarch ppc64 ppc64le
+%if (0%{?rhel} != 7)
+
 %dir %{_datadir}/%{name}/lualib/decisiontree
 %dir %{_datadir}/%{name}/lualib/nn
 %dir %{_datadir}/%{name}/lualib/optim
@@ -207,11 +224,23 @@ install -Dpm 0644 LICENSE.md %{buildroot}%{_docdir}/licenses/LICENSE.md
 %{_datadir}/%{name}/lualib/optim/*.lua
 %{_datadir}/%{name}/lualib/paths/*.lua
 %{_datadir}/%{name}/lualib/torch/*.lua
+%else
+%dir %{_datadir}/%{name}/lualib/lua_magic
+%dir %{_datadir}/%{name}/lualib/lua_selectors
+%{_datadir}/%{name}/lualib/lua_magic/*.lua
+%{_datadir}/%{name}/lualib/lua_selectors/*.lua
+%endif
 %endif
 %dir %{_datadir}/%{name}/lualib/rspamadm
+%dir %{_datadir}/%{name}/lualib/lua_ffi
+%dir %{_datadir}/%{name}/lualib/lua_scanners
+%dir %{_datadir}/%{name}/lualib/lua_magic
+%dir %{_datadir}/%{name}/lualib/lua_selectors
 %{_datadir}/%{name}/lualib/rspamadm/*.lua
 %{_datadir}/%{name}/lualib/lua_ffi/*.lua
 %{_datadir}/%{name}/lualib/lua_scanners/*.lua
+%{_datadir}/%{name}/lualib/lua_magic/*.lua
+%{_datadir}/%{name}/lualib/lua_selectors/*.lua
 %{_datadir}/%{name}/lualib/*.lua
 %endif
 
@@ -237,25 +266,29 @@ install -Dpm 0644 LICENSE.md %{buildroot}%{_docdir}/licenses/LICENSE.md
 %config(noreplace) %{_sysconfdir}/%{name}/*.inc
 
 %if (0%{?fedora} >=28 || 0%{?rhel} > 7)
-%dir %{_sysconfdir}/%{name}/{local,modules,override,scores}.d
-%config(noreplace) %{_sysconfdir}/%{name}/{modules,scores}.d/*
+%dir %{_sysconfdir}/%{name}/{local,modules,override,scores,maps}.d
+%config(noreplace) %{_sysconfdir}/%{name}/{modules,scores,maps}.d/*
 %else
 %dir %{_sysconfdir}/%{name}/local.d
 %dir %{_sysconfdir}/%{name}/modules.d
 %dir %{_sysconfdir}/%{name}/override.d
 %dir %{_sysconfdir}/%{name}/scores.d
+%dir %{_sysconfdir}/%{name}/maps.d
 %config(noreplace) %{_sysconfdir}/%{name}/modules.d/*
 %config(noreplace) %{_sysconfdir}/%{name}/scores.d/*
+%config(noreplace) %{_sysconfdir}/%{name}/maps.d/*
 %endif
 
 %{_unitdir}/rspamd.service
 
 %changelog
-* Mon Jul 18 2019 Jason Robertson <copr@dden.ca> - 1.9.4-5
-- Previous changes did not apply properly
+* Mon Oct 21 2019 Jason Robertson <copr@dden.ca> - 2.0-3
+- Adding support for epel8
+- Adding support for Hyperscan with i386
 
-* Mon Jul 18 2019 Jason Robertson <copr@dden.ca> - 1.9.4-4
-- Revert changes done for 1.9.4-3
+* Sun Oct 20 2019 Jason Robertson <copr@dden.ca> - 2.0-1
+- Updated for 2.0
+- Upstream added a requirement for Libsodium.
 
 * Mon May 27 2019 Jason Robertson <copr@dden.ca> - 1.9.4-3
 - Cleanup accounts when uninstalled
