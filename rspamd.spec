@@ -1,6 +1,6 @@
 Name:             rspamd
-Version:          2.1
-Release:          1%{?dist}
+Version:          2.3
+Release:          3%{?dist}
 Summary:          Rapid spam filtering system
 License:          ASL 2.0 and LGPLv2+ and LGPLv3 and BSD and MIT and CC0 and zlib
 URL:              https://www.rspamd.com/
@@ -9,7 +9,7 @@ Source1:          80-rspamd.preset
 Source2:          rspamd.service
 Source3:          rspamd.logrotate
 Source4:          rspamd.sysusers
-Patch0:           rspamd-secure-ssl-ciphers.patch
+#Patch0:           rspamd-secure-ssl-ciphers.patch
 
 %if (0%{?rhel} == 7)
 BuildRequires:    cmake3
@@ -95,7 +95,7 @@ Provides: bundled(lua-lupa)
 # lua-tablespace: MIT
 Provides: bundled(lua-tablespace) = 2.0.0
 # mumhash: MIT
-Provides: bundled(mumhash)
+Provides: bundled(7mumhash)
 # ngx-http-parser: MIT
 Provides: bundled(ngx-http-parser) = 2.2.0
 # perl-Mozilla-PublicSuffix: MIT
@@ -123,7 +123,7 @@ lua.
 
 %prep
 %setup -q
-%patch0 -p1
+#%patch0 -p1
 #%patch1 -p1 -b .cmake
 rm -rf centos
 rm -rf debian
@@ -151,6 +151,9 @@ rm -rf freebsd
 %if (0%{?fedora} >= 28 || 0%{?rhel} > 7)
   -DENABLE_HYPERSCAN=ON \
   -DHYPERSCAN_ROOT_DIR=/opt/hyperscan \
+%endif
+%if (0%{?rhel} == 7)
+  -DCMAKE_C_OPT_FLAGS="-m32 -maes" \
 %endif
 %endif
   -DLOGDIR=%{_localstatedir}/log/%{name} \
@@ -203,6 +206,7 @@ install -Dpm 0644 LICENSE.md %{buildroot}%{_docdir}/licenses/LICENSE.md
 %dir %{_datadir}/%{name}/elastic
 %dir %{_datadir}/%{name}/languages
 %dir %{_datadir}/%{name}/lualib
+%dir %{_datadir}/%{name}/lualib/lua_content
 %dir %{_datadir}/%{name}/lualib/lua_ffi
 %dir %{_datadir}/%{name}/lualib/lua_magic
 %dir %{_datadir}/%{name}/lualib/lua_scanners
@@ -216,6 +220,7 @@ install -Dpm 0644 LICENSE.md %{buildroot}%{_docdir}/licenses/LICENSE.md
 %{_datadir}/%{name}/languages/*.json
 %{_datadir}/%{name}/languages/stop_words
 %{_datadir}/%{name}/lualib/*.lua
+%{_datadir}/%{name}/lualib/lua_content/*.lua
 %{_datadir}/%{name}/lualib/lua_ffi/*.lua
 %{_datadir}/%{name}/lualib/lua_magic/*.lua
 %{_datadir}/%{name}/lualib/lua_scanners/*.lua
@@ -251,6 +256,12 @@ install -Dpm 0644 LICENSE.md %{buildroot}%{_docdir}/licenses/LICENSE.md
 %{_unitdir}/rspamd.service
 
 %changelog
+* Fri Feb 21 2020 Jason Robertson <copr@dden.ca> - 2.3-3
+- Updated to 2.3 - https://github.com/rspamd/rspamd/releases/tag/2.3
+- Version 2.2 was skipped as due to working out a bug with libottery for RHEL7 x86_64
+- Removed crypto patch, as this prevented compilation, may re-add this in the future.
+- New files added to rspamd - %{_datadir}/%{name}/lualib/lua_content/*.lua
+
 * Wed Oct 30 2019 Jason Robertson <copr@dden.ca> - 2.1-12
 - Updated to 2.1 - https://github.com/rspamd/rspamd/releases/tag/2.1
 
