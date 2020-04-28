@@ -1,0 +1,19 @@
+diff -ur rspamd-2.4/src/libserver/ssl_util.c rspamd-2.4-cipher/src/libserver/ssl_util.c
+--- rspamd-2.4/src/libserver/ssl_util.c	2020-02-26 08:30:44.000000000 -0500
++++ rspamd-2.4-cipher/src/libserver/ssl_util.c	2020-03-10 17:47:46.270541712 -0400
+@@ -1076,7 +1076,7 @@
+ rspamd_ssl_ctx_config (struct rspamd_config *cfg, gpointer ssl_ctx)
+ {
+ 	struct rspamd_ssl_ctx *ctx = (struct rspamd_ssl_ctx *)ssl_ctx;
+-	static const char default_secure_ciphers[] = "HIGH:!aNULL:!kRSA:!PSK:!SRP:!MD5:!RC4";
++	static const char default_secure_ciphers[] = "PROFILE=SYSTEM";
+ 
+ 	if (cfg->ssl_ca_path) {
+ 		if (SSL_CTX_load_verify_locations (ctx->s, cfg->ssl_ca_path,
+@@ -1111,4 +1111,4 @@
+ 
+ 	rspamd_lru_hash_destroy (ctx->sessions);
+ 	SSL_CTX_free (ctx->s);
+-}
+\ No newline at end of file
++}
