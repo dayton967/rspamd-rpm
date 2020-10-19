@@ -1,6 +1,6 @@
 Name:             rspamd
-Version:          2.4
-Release:          2%{?dist}
+Version:          2.5
+Release:          1%{?dist}
 Summary:          Rapid spam filtering system
 License:          ASL 2.0 and LGPLv2+ and LGPLv3 and BSD and MIT and CC0 and zlib
 URL:              https://www.rspamd.com/
@@ -257,8 +257,15 @@ install -Dpm 0644 LICENSE.md %{buildroot}%{_docdir}/licenses/LICENSE.md
 %{_unitdir}/rspamd.service
 
 %changelog
+* Tue Apr 28 2020 Jason Robertson <copr@dden.ca> - 2.5-1
+- Updated to 2.4 - https://github.com/rspamd/rspamd/releases/tag/2.5
+
+* Wed Mar 11 2020 Jason Robertson <copr@dden.ca> - 2.4-2
+- Fixed SSL patch
+
 * Wed Mar 11 2020 Jason Robertson <copr@dden.ca> - 2.4-1
 - Updated to 2.4 - https://github.com/rspamd/rspamd/releases/tag/2.4
+
 * Tue Mar 10 2020 Jason Robertson <copr@dden.ca> - 2.3-4
 - Fixed bug in the contributed replxx code to allow compiling on Fedora 32+
 - Readded the crypto patch
