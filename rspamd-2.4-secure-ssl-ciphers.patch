@@ -10,10 +10,3 @@ diff -ur rspamd-2.4/src/libserver/ssl_util.c rspamd-2.4-cipher/src/libserver/ssl
  
  	if (cfg->ssl_ca_path) {
  		if (SSL_CTX_load_verify_locations (ctx->s, cfg->ssl_ca_path,
-@@ -1111,4 +1111,4 @@
- 
- 	rspamd_lru_hash_destroy (ctx->sessions);
- 	SSL_CTX_free (ctx->s);
--}
-\ No newline at end of file
-+}
