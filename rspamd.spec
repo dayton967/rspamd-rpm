@@ -132,6 +132,7 @@ rm -rf docker
 rm -rf freebsd
 
 %build
+#
 %if (0%{?rhel} == 7)
 %cmake3 \
 %else
