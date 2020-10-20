@@ -130,9 +130,9 @@ rm -rf centos
 rm -rf debian
 rm -rf docker
 rm -rf freebsd
+# TODO: Investigate, do we want DEBIAN_BUILD=1? Any other improvements?
 
 %build
-#
 %if (0%{?rhel} == 7)
 %cmake3 \
 %else
@@ -140,7 +140,6 @@ rm -rf freebsd
 %endif
   -DCMAKE_C_FLAGS="${RPM_OPT_FLAGS}" \
   -DCMAKE_CXX_FLAGS="${RPM_OPT_FLAGS}" \
-  -DDEBIAN_BUILD=0
   -DCONFDIR=%{_sysconfdir}/%{name} \
   -DMANDIR=%{_mandir} \
   -DDBDIR=%{_sharedstatedir}/%{name} \
@@ -262,16 +261,8 @@ install -Dpm 0644 LICENSE.md %{buildroot}%{_docdir}/licenses/LICENSE.md
 %{_unitdir}/rspamd.service
 
 %changelog
-* Mon Oct 19 2020 Jason Robertson <copr@dden.ca> - 2.5-5
-- Updated to 2.6 - https://github.com/rspamd/rspamd/releases/tag/2.6
-- Removed replxx patch, as the built in replxx has been fixed.
-- Cleaned up the Cipher patch, as the patch tried to update a missing new line
-
-* Mon Oct 19 2020 Jason Robertson <copr@dden.ca> - 2.5-5
-- Updated spec file to support Fedora 33. Fedora 33 changed the default %cmake macros
-
 * Tue Apr 28 2020 Jason Robertson <copr@dden.ca> - 2.5-1
-- Updated to 2.5 - https://github.com/rspamd/rspamd/releases/tag/2.5
+- Updated to 2.4 - https://github.com/rspamd/rspamd/releases/tag/2.5
 
 * Wed Mar 11 2020 Jason Robertson <copr@dden.ca> - 2.4-2
 - Fixed SSL patch
