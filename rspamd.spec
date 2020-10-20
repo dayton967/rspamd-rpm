@@ -1,6 +1,7 @@
+%define __cmake_in_source_build 1
 Name:             rspamd
 Version:          2.5
-Release:          1%{?dist}
+Release:          5%{?dist}
 Summary:          Rapid spam filtering system
 License:          ASL 2.0 and LGPLv2+ and LGPLv3 and BSD and MIT and CC0 and zlib
 URL:              https://www.rspamd.com/
@@ -11,6 +12,7 @@ Source3:          rspamd.logrotate
 Source4:          rspamd.sysusers
 Patch1:           rspamd-replxx.patch
 Patch2:           rspamd-2.4-secure-ssl-ciphers.patch
+
 
 %if (0%{?rhel} == 7)
 BuildRequires:    cmake3
@@ -138,6 +140,8 @@ rm -rf freebsd
 %else
 %cmake \
 %endif
+  -DCMAKE_C_FLAGS="${RPM_OPT_FLAGS}" \
+  -DCMAKE_CXX_FLAGS="${RPM_OPT_FLAGS}" \
   -DCONFDIR=%{_sysconfdir}/%{name} \
   -DMANDIR=%{_mandir} \
   -DDBDIR=%{_sharedstatedir}/%{name} \
@@ -162,8 +166,9 @@ rm -rf freebsd
   -DLIBDIR=%{_libdir}/%{name}/ \
   -DNO_SHARED=ON \
   -DDEBIAN_BUILD=1 \
+  -DCMAKE_INSTALL_PREFIX=%{_prefix} \
   -DRSPAMD_USER=%{name} \
-  -DRSPAMD_GROUP=%{name}
+  -DRSPAMD_GROUP=%{name} .
 %make_build
 
 %check
