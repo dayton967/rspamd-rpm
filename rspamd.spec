@@ -1,7 +1,7 @@
 %define __cmake_in_source_build 1
 Name:             rspamd
 Version:          2.6
-Release:          1%{?dist}
+Release:          2%{?dist}
 Summary:          Rapid spam filtering system
 License:          ASL 2.0 and LGPLv2+ and LGPLv3 and BSD and MIT and CC0 and zlib
 URL:              https://www.rspamd.com/
@@ -146,8 +146,18 @@ rm -rf freebsd
   -DRUNDIR=%{_localstatedir}/run \
   -DWANT_SYSTEMD_UNITS=ON \
   -DSYSTEMDDIR=%{_unitdir} \
-%ifarch ppc64le ppc64
+%ifnarch ppc64le ppc64 aarch64
+  -DENABLE_LUAJIT=ON \
+%else
+%ifarch aarch64
+%if (0%{?fedora} >=28 || 0%{?rhel} > 7)
+  -DENABLE_LUAJIT=ON \
+%else
   -DENABLE_LUAJIT=OFF \
+%endif
+%else
+  -DENABLE_LUAJIT=OFF \
+%endif
 %endif
   -DENABLE_HIREDIS=ON \
 %ifarch x86_64
@@ -261,8 +271,11 @@ install -Dpm 0644 LICENSE.md %{buildroot}%{_docdir}/licenses/LICENSE.md
 %{_unitdir}/rspamd.service
 
 %changelog
+* Tue Jan 19 2010 Jason Robertson <copr@dden.ca> - 2.6-2
+- Updated to 2.6 - https://github.com/rspamd/rspamd/releases/tag/2.6
+
 * Tue Apr 28 2020 Jason Robertson <copr@dden.ca> - 2.5-1
-- Updated to 2.4 - https://github.com/rspamd/rspamd/releases/tag/2.5
+- Updated to 2.5 - https://github.com/rspamd/rspamd/releases/tag/2.5
 
 * Wed Mar 11 2020 Jason Robertson <copr@dden.ca> - 2.4-2
 - Fixed SSL patch
