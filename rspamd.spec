@@ -1,7 +1,7 @@
 %define __cmake_in_source_build 1
 Name:             rspamd
-Version:          2.6
-Release:          2%{?dist}
+Version:          3.1
+Release:          1%{?dist}
 Summary:          Rapid spam filtering system
 License:          ASL 2.0 and LGPLv2+ and LGPLv3 and BSD and MIT and CC0 and zlib
 URL:              https://www.rspamd.com/
@@ -44,6 +44,7 @@ BuildRequires:    pkgconfig(lua)
 BuildRequires:    pkgconfig(lua)
 %endif
 %endif
+BuildRequires:	  fmt-devel
 BuildRequires:    openssl-devel
 BuildRequires:    pcre-devel
 BuildRequires:    perl
@@ -173,6 +174,7 @@ rm -rf freebsd
   -DPLUGINSDIR=%{_datadir}/%{name} \
   -DLIBDIR=%{_libdir}/%{name}/ \
   -DNO_SHARED=ON \
+  -DSYSTEM_FMT=ON \
   -DDEBIAN_BUILD=1 \
   -DCMAKE_INSTALL_PREFIX=%{_prefix} \
   -DRSPAMD_USER=%{name} \
@@ -271,6 +273,11 @@ install -Dpm 0644 LICENSE.md %{buildroot}%{_docdir}/licenses/LICENSE.md
 %{_unitdir}/rspamd.service
 
 %changelog
+* Tue Nov 09 2021 Ajay Ramaswamy <ajay@ramaswamy.net>
+- Updated to 3.1 - https://github.com/rspamd/rspamd/releases/tag/3.1
+- add fmt-devel to buildrequires and build against system fmt fc35
+  has v8 while contrib has v7
+
 * Tue Jan 19 2010 Jason Robertson <copr@dden.ca> - 2.6-2
 - Updated to 2.6 - https://github.com/rspamd/rspamd/releases/tag/2.6
 
