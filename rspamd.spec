@@ -1,7 +1,8 @@
 %define __cmake_in_source_build 1
+
 Name:             rspamd
-Version:          3.1
-Release:          1%{?dist}
+Version:          3.4
+Release:          4%{?dist}
 Summary:          Rapid spam filtering system
 License:          ASL 2.0 and LGPLv2+ and LGPLv3 and BSD and MIT and CC0 and zlib
 URL:              https://www.rspamd.com/
@@ -11,40 +12,36 @@ Source2:          rspamd.service
 Source3:          rspamd.logrotate
 Source4:          rspamd.sysusers
 Patch2:           rspamd-2.4-secure-ssl-ciphers.patch
+Patch4:           rspamd-cmake-linker.patch
 
-
-%if (0%{?rhel} == 7)
-BuildRequires:    cmake3
+%if (0%{?rhel} >= 7)
+BuildRequires:    cmake3 >= 3.12
 %else
-BuildRequires:    cmake
+BuildRequires:    cmake >= 3.12
 %endif
 BuildRequires:    file-devel >= 2.28
 BuildRequires:    glib2-devel
+BuildRequires:    glibc-devel
+BuildRequires:    glibc-headers
 BuildRequires:    gmime-devel
-%if (0%{?fedora} >=28 || 0%{?rhel} >= 7)
+BuildRequires:    gcc >= 8.0
 BuildRequires:    openblas-devel
 Requires:         openblas
-%endif
-%if (0%{?fedora} >=28 || 0%{?rhel} > 7)
+
 %ifarch x86_64
 BuildRequires:    hyperscan-devel
 %endif
-%endif
+
 BuildRequires:    libicu-devel
-%ifnarch ppc64le ppc64 aarch64
+%ifnarch ppc64le ppc64 aarch64 s390x
 BuildRequires:    pkgconfig(luajit)
 %else
 %ifarch aarch64
-%if (0%{?fedora} >=28 || 0%{?rhel} > 7)
 BuildRequires:    pkgconfig(luajit)
 %else
 BuildRequires:    pkgconfig(lua)
 %endif
-%else
-BuildRequires:    pkgconfig(lua)
 %endif
-%endif
-BuildRequires:	  fmt-devel
 BuildRequires:    openssl-devel
 BuildRequires:    pcre-devel
 BuildRequires:    perl
@@ -60,6 +57,9 @@ BuildRequires:    pkgconfig(sqlite3)
 Requires:         pkgconfig(sqlite3)
 BuildRequires:    pkgconfig(libsodium) >= 1.0.0
 Requires:         pkgconfig(libsodium) >= 1.0.0
+BuildRequires:    fmt-devel
+Requires:                 fmt
+
 
 # Bundled dependencies
 # TODO: Add explicit bundled lib versions
@@ -112,12 +112,9 @@ Provides: bundled(t1ha)
 # uthash: BSD
 Provides: bundled(uthash) = 1.9.8
 # xxhash: BSD
-Provides: bundled(xxhash)
+Provides: bundled(xxhash) = 0.8.1
 # zstd: BSD
-Provides: bundled(zstd) = 1.3.1
-
-
-
+Provides: bundled(zstd) = 1.4.5
 
 %description
 Rspamd is a rapid, modular and lightweight spam filter. It is designed to work
@@ -127,20 +124,22 @@ lua.
 %prep
 %setup -q
 %patch2 -p1
+%patch4 -p1
 rm -rf centos
 rm -rf debian
 rm -rf docker
 rm -rf freebsd
-# TODO: Investigate, do we want DEBIAN_BUILD=1? Any other improvements?
 
 %build
-%if (0%{?rhel} == 7)
+%if (0%{?rhel} >= 7)
 %cmake3 \
 %else
 %cmake \
 %endif
   -DCMAKE_C_FLAGS="${RPM_OPT_FLAGS}" \
   -DCMAKE_CXX_FLAGS="${RPM_OPT_FLAGS}" \
+  -DCMAKE_C_FLAGS_RELEASE="${RPM_OPT_FLAGS}" \
+  -DCMAKE_CXX_FLAGS_RELEASE="${RPM_OPT_FLAGS}" \
   -DCONFDIR=%{_sysconfdir}/%{name} \
   -DMANDIR=%{_mandir} \
   -DDBDIR=%{_sharedstatedir}/%{name} \
@@ -151,35 +150,31 @@ rm -rf freebsd
   -DENABLE_LUAJIT=ON \
 %else
 %ifarch aarch64
-%if (0%{?fedora} >=28 || 0%{?rhel} > 7)
   -DENABLE_LUAJIT=ON \
-%else
-  -DENABLE_LUAJIT=OFF \
-%endif
 %else
   -DENABLE_LUAJIT=OFF \
 %endif
 %endif
   -DENABLE_HIREDIS=ON \
 %ifarch x86_64
-%if (0%{?fedora} >= 28 || 0%{?rhel} > 7)
   -DENABLE_HYPERSCAN=ON \
   -DHYPERSCAN_ROOT_DIR=/opt/hyperscan \
-%endif
-%if (0%{?rhel} == 7)
-  -DCMAKE_C_OPT_FLAGS="-m32 -maes" \
-%endif
 %endif
   -DLOGDIR=%{_localstatedir}/log/%{name} \
   -DPLUGINSDIR=%{_datadir}/%{name} \
   -DLIBDIR=%{_libdir}/%{name}/ \
   -DNO_SHARED=ON \
-  -DSYSTEM_FMT=ON \
   -DDEBIAN_BUILD=1 \
   -DCMAKE_INSTALL_PREFIX=%{_prefix} \
+%ifarch athlon i686 i586 i486 i386
+  -DHAVE_SSE2=OFF -DHAVE_AVX2=OFF -DHAVE_AVX=OFF -DHAVE_SSE42=OFF \
+%endif
+  -DSYSTEM_FMT=ON \
   -DRSPAMD_USER=%{name} \
-  -DRSPAMD_GROUP=%{name} .
-%make_build
+  -DRSPAMD_GROUP=%{name} \
+  .
+
+%{__make} %{?jobs:-j%jobs}
 
 %check
 # TODO: Run Tests
@@ -227,6 +222,7 @@ install -Dpm 0644 LICENSE.md %{buildroot}%{_docdir}/licenses/LICENSE.md
 %dir %{_datadir}/%{name}/lualib/lua_magic
 %dir %{_datadir}/%{name}/lualib/lua_scanners
 %dir %{_datadir}/%{name}/lualib/lua_selectors
+%dir %{_datadir}/%{name}/lualib/plugins
 %dir %{_datadir}/%{name}/lualib/rspamadm
 %dir %{_datadir}/%{name}/rules
 %dir %{_datadir}/%{name}/rules/regexp
@@ -241,6 +237,7 @@ install -Dpm 0644 LICENSE.md %{buildroot}%{_docdir}/licenses/LICENSE.md
 %{_datadir}/%{name}/lualib/lua_magic/*.lua
 %{_datadir}/%{name}/lualib/lua_scanners/*.lua
 %{_datadir}/%{name}/lualib/lua_selectors/*.lua
+%{_datadir}/%{name}/lualib/plugins/*.lua
 %{_datadir}/%{name}/lualib/rspamadm/*.lua
 %{_datadir}/%{name}/rules/*.lua
 %{_datadir}/%{name}/rules/controller/*.lua
@@ -273,16 +270,41 @@ install -Dpm 0644 LICENSE.md %{buildroot}%{_docdir}/licenses/LICENSE.md
 %{_unitdir}/rspamd.service
 
 %changelog
-* Tue Nov 09 2021 Ajay Ramaswamy <ajay@ramaswamy.net>
-- Updated to 3.1 - https://github.com/rspamd/rspamd/releases/tag/3.1
-- add fmt-devel to buildrequires and build against system fmt fc35
-  has v8 while contrib has v7
+* Sat Dec 03 2022 Jason Robertson <copr@dden.ca> - 3.4-4
+- Updated to 3.4 - https://github.com/rspamd/rspamd/releases/tag/3.4
+- Fixed bug where rspamd would not compile on i386 based platforms, due
+  to changes with the linker.
+- Cleaned up spec file, removing legacy platforms, that copr doesn't support.
 
-* Tue Jan 19 2010 Jason Robertson <copr@dden.ca> - 2.6-2
+* Sat Apr 16 2022 Jason Robertson <copr@dden.ca> - 3.2-5
+- Updated builtin version strings.
+
+* Sat Apr 16 2022 Jason Robertson <copr@dden.ca> - 3.2-4
+- Fixed broken linking process.  Added support for ld.bfd in Toolset.cmake
+
+* Fri Apr 15 2022 Jason Robertson <copr@dden.ca> - 3.2-1
+- Updated to 3.2 - https://github.com/rspamd/rspamd/releases/tag/3.2
+- Currently Fedora 36 unsupported due to change to the linking process.
+
+* Tue Nov 09 2021 Jason Robertson <copr@dden.ca> - 3.1-7
+- Removed fmt dependency
+
+* Tue Nov 09 2021 Jason Robertson <copr@dden.ca> - 3.1-5
+- Updated to 3.1 - https://github.com/rspamd/rspamd/releases/tag/3.1
+- Fixed bug where rspamd would not compile on i386 based platforms, due
+  64bit ASM calls in libcryptobox
+- Version 3.0 skipped due to bugs with doctest, that made it fail compiling
+  on most platforms
+
+* Tue Jan 19 2021 Jason Robertson <copr@dden.ca> - 2.7-1
+- Updated to 2.7 for BETA - https://github.com/rspamd/rspamd/releases/tag/2.7
+- New files added to rspamd - %{_datadir}/%{name}/lualib/plugins/*.lua
+
+* Tue Jan 19 2021 Jason Robertson <copr@dden.ca> - 2.6-2
 - Updated to 2.6 - https://github.com/rspamd/rspamd/releases/tag/2.6
 
 * Tue Apr 28 2020 Jason Robertson <copr@dden.ca> - 2.5-1
-- Updated to 2.5 - https://github.com/rspamd/rspamd/releases/tag/2.5
+- Updated to 2.4 - https://github.com/rspamd/rspamd/releases/tag/2.5
 
 * Wed Mar 11 2020 Jason Robertson <copr@dden.ca> - 2.4-2
 - Fixed SSL patch
@@ -343,4 +365,3 @@ install -Dpm 0644 LICENSE.md %{buildroot}%{_docdir}/licenses/LICENSE.md
 - Add patch to use OpenSSL system profile cipher list
 - Add license information and provides declarations for bundled libraries
 - Forked from https://raw.githubusercontent.com/vstakhov/rspamd/b1717aafa379b007a093f16358acaf4b44fc03e2/centos/rspamd.spec
-

@@ -1,0 +1,16 @@
+--- rspamd-3.2-old/cmake/Toolset.cmake  2022-03-26 08:23:26.000000000 -0400
++++ rspamd-3.2/cmake/Toolset.cmake      2022-04-16 13:05:31.760741251 -0400
+@@ -54,10 +54,13 @@
+ 
+ find_program(LLD_PATH NAMES "ld.lld" "lld")
+ find_program(GOLD_PATH NAMES "ld.gold" "gold")
++find_program(BFD_PATH NAMES "ld.bfd" "bfd")
+ 
+ if(NOT LINKER_NAME)
+     if(LLD_PATH)
+         set(LINKER_NAME "lld")
++    elseif(BFD_PATH)
++        set(LINKER_NAME "bfd")
+     elseif(GOLD_PATH)
+         set(LINKER_NAME "gold")
+     else()
